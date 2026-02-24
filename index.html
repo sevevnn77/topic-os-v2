@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopicOS - 话题纵深框架</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00d4ff;
+            --primary-dark: #00a8cc;
+            --secondary: #7c3aed;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg-dark: #0a0a0f;
+            --bg-card: rgba(255, 255, 255, 0.03);
+            --bg-hover: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #ffffff;
+            --text-muted: rgba(255, 255, 255, 0.6);
+            --text-sub: rgba(255, 255, 255, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            z-index: -1;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+        /* 头部 */
+        .header {
+            padding: 16px 0;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            z-index: 100;
+        }
+
+        .header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand { font-weight: 600; font-size: 18px; }
+        .brand span { color: var(--primary); }
+
+        /* 模块通用 */
+        .module { padding: 48px 0; border-bottom: 1px solid var(--border); }
+        .module:last-child { border-bottom: none; }
+
+        .module-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .module-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .module-title h2 { font-size: 20px; font-weight: 600; }
+        .module-title p { font-size: 14px; color: var(--text-muted); }
+
+        /* 锚点模块 */
+        .anchor-module { padding-top: 64px; }
+        
+        .topic-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+        .topic-tag {
+            padding: 4px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .topic-title {
+            font-size: clamp(28px, 5vw, 42px);
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .topic-subtitle { font-size: 18px; color: var(--text-muted); margin-bottom: 20px; }
+
+        .topic-definition {
+            padding: 20px 24px;
+            background: var(--bg-card);
+            border-left: 3px solid var(--primary);
+            border-radius: 0 12px 12px 0;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+
+        .anchor-meta { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+        
+        .stage-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            font-size: 14px;
+        }
+
+        .stage-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* 变量模块 */
+        .variables-list { display: flex; flex-direction: column; gap: 16px; }
+
+        .variable-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .variable-card:hover { border-color: rgba(0, 212, 255, 0.2); }
+        .variable-card.high { border-left: 3px solid var(--danger); }
+        .variable-card.medium { border-left: 3px solid var(--warning); }
+        .variable-card.low { border-left: 3px solid var(--success); }
+
+        .variable-title { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
+        .variable-desc { color: var(--text-muted); margin-bottom: 16px; font-size: 15px; }
+
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .evidence-item {
+            background: var(--bg-hover);
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        .evidence-label { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; }
+        .evidence-value { font-size: 18px; font-weight: 700; color: var(--primary); }
+        .evidence-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .variable-question {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+
+        .variable-question-label { font-size: 12px; color: var(--warning); margin-bottom: 4px; }
+        .variable-insight { font-size: 14px; color: var(--text-muted); }
+        .variable-insight strong { color: var(--success); }
+
+        /* 时间线 */
+        .timeline { position: relative; padding-left: 28px; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+        }
+
+        .timeline-item { position: relative; padding-bottom: 28px; }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -28px;
+            top: 4px;
+            width: 10px;
+            height: 10px;
+            background: var(--bg-dark);
+            border: 2px solid var(--primary);
+            border-radius: 50%;
+            margin-left: -4px;
+        }
+
+        .timeline-item.key::before { background: var(--primary); box-shadow: 0 0 10px rgba(0, 212, 255, 0.4); }
+
+        .timeline-date { font-size: 13px; color: var(--primary); font-weight: 600; margin-bottom: 4px; }
+        .timeline-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        .timeline-type { display: inline-block; padding: 2px 8px; background: var(--bg-hover); border-radius: 4px; font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+        .timeline-desc { color: var(--text-muted); font-size: 14px; }
+
+        /* 信号 */
+        .signals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+
+        .signal-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            position: relative;
+        }
+
+        .signal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+
+        .signal-card.key::before { background: var(--danger); }
+        .signal-card.important::before { background: var(--warning); }
+        .signal-card.normal::before { background: var(--success); }
+
+        .signal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .signal-name { font-weight: 600; }
+        .signal-trend { font-size: 18px; }
+
+        .signal-value { font-size: 32px; font-weight: 700; margin-bottom: 8px; }
+        .signal-card.key .signal-value { color: var(--danger); }
+        .signal-card.important .signal-value { color: var(--warning); }
+        .signal-card.normal .signal-value { color: var(--success); }
+
+        .signal-interpretation { font-size: 13px; color: var(--text-muted); }
+
+        /* 分歧 */
+        .debate-box {
+            background: linear-gradient(135deg, rgba(0, 212, 255, 0.05), rgba(124, 58, 237, 0.05));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .debate-topic { text-align: center; font-size: 18px; font-weight: 600; margin-bottom: 24px; }
+
+        .debate-sides { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+
+        .debate-side {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .debate-side:first-child { border-left: 3px solid var(--primary); }
+        .debate-side:last-child { border-right: 3px solid var(--secondary); }
+
+        .debate-position { font-size: 12px; color: var(--text-sub); margin-bottom: 6px; }
+        .debate-view { font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+
+        .debate-args { list-style: none; }
+        .debate-args li { padding: 4px 0; color: var(--text-muted); font-size: 14px; display: flex; gap: 6px; }
+        .debate-args li::before { content: '•'; color: var(--primary); }
+
+        .debate-reps { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-sub); }
+
+        /* 内容 */
+        .content-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+        .content-tab { padding: 8px 16px; background: transparent; border: none; color: var(--text-muted); font-size: 14px; cursor: pointer; border-radius: 6px; }
+        .content-tab:hover, .content-tab.active { background: var(--bg-card); color: var(--primary); }
+
+        .content-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .content-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .content-item:hover { border-color: rgba(0, 212, 255, 0.2); }
+
+        .content-title { font-weight: 500; margin-bottom: 4px; }
+        .content-meta { display: flex; gap: 12px; font-size: 13px; color: var(--text-muted); }
+        .content-tag { padding: 2px 8px; background: var(--bg-hover); border-radius: 4px; font-size: 11px; }
+
+        /* 订阅 */
+        .subscribe-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .subscribe-stats { display: flex; justify-content: center; gap: 48px; margin-bottom: 24px; }
+        .stat-num { font-size: 36px; font-weight: 700; color: var(--primary); }
+        .stat-label { font-size: 13px; color: var(--text-muted); }
+
+        .btn-primary {
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            border-radius: 10px;
+            color: var(--bg-dark);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        footer { padding: 40px 0; text-align: center; color: var(--text-sub); font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <header class="header">
+        <div class="container">
+            <div class="brand">Topic<span>OS</span></div>
+        </div>
+    </header>
+
+    <!-- 锚点 -->
+    <section class="module anchor-module" id="anchor">
+        <div class="container">
+            <div class="topic-tags" id="topic-tags"></div>
+            <h1 class="topic-title" id="topic-title"></h1>
+            <p class="topic-subtitle" id="topic-subtitle"></p>
+            <div class="topic-definition" id="topic-definition"></div>
+            <div class="anchor-meta">
+                <span class="stage-badge" id="stage-badge"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- 关键变量 -->
+    <section class="module" id="variables">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">🔬</div>
+                <div class="module-title">
+                    <h2>关键变量</h2>
+                    <p>影响话题走向的核心因素</p>
+                </div>
+            </div>
+            <div class="variables-list" id="variables-list"></div>
+        </div>
+    </section>
+
+    <!-- 时间线 -->
+    <section class="module" id="timeline">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">📅</div>
+                <div class="module-title">
+                    <h2>演化时间线</h2>
+                    <p>话题发展的关键节点</p>
+                </div>
+            </div>
+            <div class="timeline" id="timeline-list"></div>
+        </div>
+    </section>
+
+    <!-- 信号 -->
+    <section class="module" id="signals">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">📡</div>
+                <div class="module-title">
+                    <h2>信号监测</h2>
+                    <p>关键指标的变化趋势</p>
+                </div>
+            </div>
+            <div class="signals-grid" id="signals-list"></div>
+        </div>
+    </section>
+
+    <!-- 分歧 -->
+    <section class="module" id="debate">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">⚖️</div>
+                <div class="module-title">
+                    <h2>观点分歧</h2>
+                    <p>话题中的争议与不同立场</p>
+                </div>
+            </div>
+            <div class="debate-box" id="debate-box"></div>
+        </div>
+    </section>
+
+    <!-- 内容 -->
+    <section class="module" id="contents">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">📚</div>
+                <div class="module-title">
+                    <h2>深度内容</h2>
+                    <p>相关分析文章与资料</p>
+                </div>
+            </div>
+            <div class="content-tabs" id="content-tabs"></div>
+            <div class="content-list" id="content-list"></div>
+        </div>
+    </section>
+
+    <!-- 订阅 -->
+    <section class="module" id="subscription">
+        <div class="container">
+            <div class="module-header">
+                <div class="module-icon">🔔</div>
+                <div class="module-title">
+                    <h2>订阅更新</h2>
+                    <p>关注话题获取最新动态</p>
+                </div>
+            </div>
+            <div class="subscribe-box" id="subscribe-box"></div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">TopicOS - 话题纵深框架系统</div>
+    </footer>
+
+    <script src="config.js"></script>
+    <script>
+        const data = TOPICOS_SCHEMA.example;
+
+        // 渲染锚点
+        document.getElementById('topic-tags').innerHTML = data.anchor.tags.map(t => 
+            `<span class="topic-tag">${t}</span>`).join('');
+        document.getElementById('topic-title').textContent = data.anchor.title;
+        document.getElementById('topic-subtitle').textContent = data.anchor.subtitle;
+        document.getElementById('topic-definition').textContent = data.anchor.definition;
+        document.getElementById('stage-badge').innerHTML = `<span>${data.anchor.stage}</span>`;
+
+        // 渲染变量
+        document.getElementById('variables-list').innerHTML = data.variables.map(v => `
+            <div class="variable-card ${v.impact === '高' ? 'high' : v.impact === '中' ? 'medium' : 'low'}">
+                <div class="variable-title">${v.title}</div>
+                <div class="variable-desc">${v.description}</div>
+                <div class="evidence-grid">${v.evidence.map(e => `
+                    <div class="evidence-item">
+                        <div class="evidence-label">${e.label}</div>
+                        <div class="evidence-value">${e.value}</div>
+                        <div class="evidence-note">${e.note}</div>
+                    </div>`).join('')}
+                </div>
+                
+                <div class="variable-question">
+                    <div class="variable-question-label">核心问题</div>
+                    <div>${v.question}</div>
+                </div>
+                
+                <div class="variable-insight"><strong>洞察：</strong>${v.insight}</div>
+            </div>`).join('');
+
+        // 渲染时间线
+        document.getElementById('timeline-list').innerHTML = data.timeline.map(t => `
+            <div class="timeline-item ${t.isKey ? 'key' : ''}">
+                <div class="timeline-date">${t.date}</div>
+                <div class="timeline-title">${t.title}</div>
+                <span class="timeline-type">${t.type}</span>
+                <div class="timeline-desc">${t.description}</div>
+            </div>`).join('');
+
+        // 渲染信号
+        const sigClass = { '关键': 'key', '重要': 'important', '一般': 'normal' };
+        const trendIcon = { '上升': '📈', '下降': '📉', '稳定': '➡️', '波动': '〰️' };
+        document.getElementById('signals-list').innerHTML = data.signals.map(s => `
+            <div class="signal-card ${sigClass[s.significance]}">
+                <div class="signal-header">
+                    <span class="signal-name">${s.name}</span>
+                    <span class="signal-trend">${trendIcon[s.trend]}</span>
+                </div>
+                <div class="signal-value">${s.currentValue}</div>
+                <div class="signal-interpretation">${s.interpretation}</div>
+            </div>`).join('');
+
+        // 渲染分歧
+        document.getElementById('debate-box').innerHTML = `
+            <div class="debate-topic">${data.debate.topic}</div>
+            <div class="debate-sides">${data.debate.sides.map(s => `
+                <div class="debate-side">
+                    <div class="debate-position">${s.position}</div>
+                    <div class="debate-view">${s.coreView}</div>
+                    <ul class="debate-args">${s.arguments.map(a => `<li>${a}</li>`).join('')}</ul>
+                    <div class="debate-reps">代表：${s.representatives}</div>
+                </div>`).join('')}
+            </div>`;
+
+        // 渲染内容
+        document.getElementById('content-tabs').innerHTML = data.contents.categories.map((c, i) => 
+            `<button class="content-tab ${i === 0 ? 'active' : ''}">${c}</button>`).join('');
+        
+        document.getElementById('content-list').innerHTML = data.contents.items.map(item => `
+            <div class="content-item">
+                <div>
+                    <div class="content-title">${item.title}</div>
+                    <div class="content-meta">
+                        <span>${item.source}</span>
+                        <span>${item.date}</span>
+                    </div>
+                </div>
+                <span class="content-tag">${item.category}</span>
+            </div>`).join('');
+
+        // 渲染订阅
+        document.getElementById('subscribe-box').innerHTML = `
+            <div class="subscribe-stats">
+                <div>
+                    <div class="stat-num">${data.subscription.followerCount.toLocaleString()}</div>
+                    <div class="stat-label">关注者</div>
+                </div>
+                <div>
+                    <div class="stat-num">${data.subscription.updateCount}</div>
+                    <div class="stat-label">本周更新</div>
+                </div>
+            </div>
+            <button class="btn-primary">订阅此话题</button>`;
+    </script>
+</body>
+</html>
